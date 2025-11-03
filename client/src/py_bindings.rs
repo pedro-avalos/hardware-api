@@ -45,7 +45,8 @@ use serde_json;
 /// - Python json module cannot be imported
 /// - Python json.loads fails to parse the JSON string
 fn to_python_json(py: Python, value: impl Serialize) -> PyResult<Py<PyAny>> {
-    let json_str = serde_json::json!(value).to_string();
+    let json_str = serde_json::to_string(&value)
+        .map_err(|e| PyRuntimeError::new_err(format!("JSON serialization failed: {e}")))?;
     let json = PyString::new(py, &json_str);
     let json_module = py.import("json")?;
     let json_object: Py<PyAny> = json_module.call_method1("loads", (json,))?.into();
